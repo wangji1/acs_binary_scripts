@@ -1,0 +1,9 @@
+requests
+psutil
+pyserial
+lxml
+pyyaml
+tzlocal
+uiautomator
+arrow
+unittest2

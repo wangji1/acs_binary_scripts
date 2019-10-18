@@ -1,0 +1,72 @@
+#Source from Base Image
+FROM ubuntu:16.04
+
+LABEL version="1.0"
+LABEL description="Base image of Celadon Auto Functional Test"
+
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    python \
+    python-pip \
+    build-essential
+    
+
+# pip install python libraries
+RUN pip install --upgrade pip
+RUN pip install requests
+RUN pip install psutil
+RUN pip install pyserial
+RUN pip install lxml
+RUN pip install pyyaml
+RUN pip install tzlocal
+RUN pip install uiautomator
+RUN pip install arrow
+RUN pip install unittest2
+RUN pip install pillow
+RUN pip install numpy==1.14.3
+RUN pip install opencv-python
+
+
+RUN apt-get update && apt-get install -y \
+    android-tools-adb \
+    android-tools-fastboot \
+    git \
+    mediainfo \
+    aapt \
+    libsm6 \
+    libxrender-dev \
+    udev
+
+COPY 51-android.rules /etc/udev/rules.d/
+RUN service udev restart
+
+# create non-root user aft
+RUN useradd --create-home aft
+RUN usermod -a -G dialout,plugdev aft
+USER aft
+WORKDIR /home/aft
+
+RUN echo "************************************* Download CTS package ***************************" \
+    && wget -q --proxy=off --no-check-certificate https://mcg-depot.intel.com/artifactory/acs_test_artifacts/OTC_Android_Auto_Test_Suite/resources/acs-opensource-resource.tar.gz \
+    && tar -vxzf acs-opensource-resource.tar.gz \
+    && rm -f acs-opensource-resource.tar.gz
+
+RUN echo "************************************* Download ACS package ***************************" \
+    && wget -q --proxy=off --no-check-certificate https://shstor001.sh.intel.com/artifactory/acs_test_artifacts/OTC_Android_Auto_Test_Suite/resources/acs_bin_package.tar.gz \
+    && tar -vxzf acs_bin_package.tar.gz \
+    && rm -f acs_bin_package.tar.gz
+
+RUN echo "************************************* ACS Test Runner ***************************" \
+    && wget -q --proxy=off --no-check-certificate https://shstor001.sh.intel.com/artifactory/acs_test_artifacts/acs_runner/run_acs.py \
+    && chmod +x ./run_acs.py
+
+
+# Notes / Tests
+# 1. Example build command (This assumes the command is run in the same dir as the build file):
+#      docker build -f celadon-aft.internal -t celadon-aft --build-arg http_proxy=http://proxy:port/ --build-arg https_proxy=http://proxy:port/ --build-arg ftp_proxy=http://proxy:port --build-arg no_proxy=localhost,127.0.0.1,company.com .
+# 2. Example Start a container: docker run --name test123 -it celadon-aft /bin/bash
+# 3. Quit the contianer by running: exit
+# 4. clean up docker instance : docker rm test123
+
